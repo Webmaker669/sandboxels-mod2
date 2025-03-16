@@ -1,4 +1,4 @@
-elements.fireball = {
+elements.balles = {
   color: "#ff4500",
   behavior: function(pixel, x, y) {
     // Fireball moves right
