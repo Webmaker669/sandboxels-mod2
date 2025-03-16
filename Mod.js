@@ -1,4 +1,4 @@
-elements.balles = {
+elements.wwwww = {
   color: "#ff4500",
   behavior: function(pixel, x, y) {
     // Fireball moves right
@@ -13,4 +13,5 @@ elements.balles = {
     }
   },
   temperature: 500, // Fireball is hot!
+  category: "weapons", // Adds it to the weapons category
 };
