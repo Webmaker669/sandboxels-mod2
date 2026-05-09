@@ -1,7 +1,7 @@
 elements.blue_goo = {
     color: "#3366ff",
     behavior: behaviors.LIQUID,
-    category: "chemistry",
+    category: "liquids",
     state: "liquid",
     density: 1200,
 
@@ -9,7 +9,7 @@ elements.blue_goo = {
         "red_goo": {
             elem1: "purple_slime",
             elem2: "purple_slime",
-            chance: 0.8
+            chance: 1.0
         }
     }
 };
@@ -17,15 +17,16 @@ elements.blue_goo = {
 elements.red_goo = {
     color: "#ff3333",
     behavior: behaviors.LIQUID,
-    category: "chemistry",
+    category: "liquids",
     state: "liquid",
     density: 1200
 };
 
 elements.purple_slime = {
     color: ["#bb00ff","#dd66ff"],
-    behavior: behaviors.STICKY,
-    category: "chemistry",
-    state: "solid",
-    viscosity: 5000
+    behavior: behaviors.LIQUID,
+    category: "liquids",
+    state: "liquid",
+    density: 1400,
+    viscosity: 50000
 };
