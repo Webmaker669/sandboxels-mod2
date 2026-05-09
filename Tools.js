@@ -1,96 +1,89 @@
-// mix_tools.js
-// Adds two custom tools to Sandboxels:
-//   Cool Mix  - Simultaneously cools and mixes/randomizes nearby pixels
-//   Heat Mix  - Simultaneously heats and mixes/randomizes nearby pixels
-
-// ── Cool Mix ────────────────────────────────────────────────────────────────
-// Rapidly chills the target pixel and swaps it with a random neighbor,
-// creating a turbulent blending effect at low temperatures.
+// mix_tools.js — Adds "Cool Mix" and "Heat Mix" tools to Sandboxels
+// Cool Mix: chills pixels and swaps them with random neighbors
+// Heat Mix: heats pixels and swaps them with random neighbors
 
 elements.cool_mix = {
-	color: "#7ecfff",
+	color: "#5bc8f5",
 	category: "tools",
-	desc: "Cools and mixes pixels together, creating a chilled turbulent blend.",
-	tool: function(pixel, x, y) {
-		// Cool the pixel
-		if (pixel.temp !== undefined) {
-			pixel.temp -= 80;
-		} else {
-			pixel.temp = -60;
-		}
+	desc: "Cools and mixes pixels, creating a chilled turbulent blend.",
+	tool: function(pixel) {
+		// Cool the target pixel
+		pixel.temp = (pixel.temp || 20) - 80;
 
-		// Mix: randomly swap this pixel with one of its neighbors
-		var directions = [
+		// Pick a random neighboring pixel to swap with
+		var dirs = [
 			[0, -1], [0, 1], [-1, 0], [1, 0],
 			[-1, -1], [1, -1], [-1, 1], [1, 1]
 		];
-		var shuffled = directions.sort(() => Math.random() - 0.5);
 
-		for (var i = 0; i < shuffled.length; i++) {
-			var nx = x + shuffled[i][0];
-			var ny = y + shuffled[i][1];
-			if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+		// Shuffle directions for randomness
+		for (var i = dirs.length - 1; i > 0; i--) {
+			var j = Math.floor(Math.random() * (i + 1));
+			var tmp = dirs[i]; dirs[i] = dirs[j]; dirs[j] = tmp;
+		}
 
-			var neighbor = pixelMap[nx] && pixelMap[nx][ny];
-			if (!neighbor || neighbor.element === "empty") continue;
+		for (var i = 0; i < dirs.length; i++) {
+			var nx = pixel.x + dirs[i][0];
+			var ny = pixel.y + dirs[i][1];
 
-			// Swap elements between the two pixels
+			if (outOfBounds(nx, ny)) continue;
+			if (isEmpty(nx, ny)) continue;
+
+			var neighbor = pixelMap[nx][ny];
+			if (!neighbor) continue;
+
+			// Swap the element types
 			var tempElem = pixel.element;
-			var tempTemp = pixel.temp !== undefined ? pixel.temp : 20;
-
 			pixel.element = neighbor.element;
-			pixel.temp = (neighbor.temp !== undefined ? neighbor.temp : 20) - 80;
-
 			neighbor.element = tempElem;
-			neighbor.temp = tempTemp - 80;
 
-			break; // one swap per tick
+			// Cool the neighbor too
+			neighbor.temp = (neighbor.temp || 20) - 80;
+
+			break;
 		}
 	},
 };
 
-// ── Heat Mix ────────────────────────────────────────────────────────────────
-// Rapidly heats the target pixel and swaps it with a random neighbor,
-// creating a turbulent blending effect at high temperatures.
-
 elements.heat_mix = {
-	color: "#ff7e2e",
+	color: "#ff7b2e",
 	category: "tools",
-	desc: "Heats and mixes pixels together, creating a hot turbulent blend.",
-	tool: function(pixel, x, y) {
-		// Heat the pixel
-		if (pixel.temp !== undefined) {
-			pixel.temp += 80;
-		} else {
-			pixel.temp = 120;
-		}
+	desc: "Heats and mixes pixels, creating a scorching turbulent blend.",
+	tool: function(pixel) {
+		// Heat the target pixel
+		pixel.temp = (pixel.temp || 20) + 80;
 
-		// Mix: randomly swap this pixel with one of its neighbors
-		var directions = [
+		// Pick a random neighboring pixel to swap with
+		var dirs = [
 			[0, -1], [0, 1], [-1, 0], [1, 0],
 			[-1, -1], [1, -1], [-1, 1], [1, 1]
 		];
-		var shuffled = directions.sort(() => Math.random() - 0.5);
 
-		for (var i = 0; i < shuffled.length; i++) {
-			var nx = x + shuffled[i][0];
-			var ny = y + shuffled[i][1];
-			if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+		// Shuffle directions for randomness
+		for (var i = dirs.length - 1; i > 0; i--) {
+			var j = Math.floor(Math.random() * (i + 1));
+			var tmp = dirs[i]; dirs[i] = dirs[j]; dirs[j] = tmp;
+		}
 
-			var neighbor = pixelMap[nx] && pixelMap[nx][ny];
-			if (!neighbor || neighbor.element === "empty") continue;
+		for (var i = 0; i < dirs.length; i++) {
+			var nx = pixel.x + dirs[i][0];
+			var ny = pixel.y + dirs[i][1];
 
-			// Swap elements between the two pixels
+			if (outOfBounds(nx, ny)) continue;
+			if (isEmpty(nx, ny)) continue;
+
+			var neighbor = pixelMap[nx][ny];
+			if (!neighbor) continue;
+
+			// Swap the element types
 			var tempElem = pixel.element;
-			var tempTemp = pixel.temp !== undefined ? pixel.temp : 20;
-
 			pixel.element = neighbor.element;
-			pixel.temp = (neighbor.temp !== undefined ? neighbor.temp : 20) + 80;
-
 			neighbor.element = tempElem;
-			neighbor.temp = tempTemp + 80;
 
-			break; // one swap per tick
+			// Heat the neighbor too
+			neighbor.temp = (neighbor.temp || 20) + 80;
+
+			break;
 		}
 	},
 };
