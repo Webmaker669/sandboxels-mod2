@@ -1,89 +1,90 @@
-// mix_tools.js — Adds "Cool Mix" and "Heat Mix" tools to Sandboxels
-// Cool Mix: chills pixels and swaps them with random neighbors
-// Heat Mix: heats pixels and swaps them with random neighbors
+// grass_smokey.js
+// Adds two custom elements to Sandboxels:
+//   grass  — A lush green solid that burns and produces "smokey"
+//   smokey — A thick dark smoke gas that rises and slowly dissipates
 
-elements.cool_mix = {
-	color: "#5bc8f5",
-	category: "tools",
-	desc: "Cools and mixes pixels, creating a chilled turbulent blend.",
-	tool: function(pixel) {
-		// Cool the target pixel
-		pixel.temp = (pixel.temp || 20) - 80;
+// ── SMOKEY ────────────────────────────────────────────────────────────────
+// Dark brownish-grey custom smoke. Rises like normal smoke but is
+// thicker and lingers a bit longer before dissipating.
 
-		// Pick a random neighboring pixel to swap with
-		var dirs = [
-			[0, -1], [0, 1], [-1, 0], [1, 0],
-			[-1, -1], [1, -1], [-1, 1], [1, 1]
-		];
+elements.smokey = {
+	name: "Smokey",
+	color: "#4a3f38",
+	behavior: behaviors.GAS,
+	category: "gases",
+	state: "gas",
+	density: 0.5,
+	temp: 110,
+	desc: "Thick dark smoke produced when Grass burns.",
 
-		// Shuffle directions for randomness
-		for (var i = dirs.length - 1; i > 0; i--) {
-			var j = Math.floor(Math.random() * (i + 1));
-			var tmp = dirs[i]; dirs[i] = dirs[j]; dirs[j] = tmp;
-		}
-
-		for (var i = 0; i < dirs.length; i++) {
-			var nx = pixel.x + dirs[i][0];
-			var ny = pixel.y + dirs[i][1];
-
-			if (outOfBounds(nx, ny)) continue;
-			if (isEmpty(nx, ny)) continue;
-
-			var neighbor = pixelMap[nx][ny];
-			if (!neighbor) continue;
-
-			// Swap the element types
-			var tempElem = pixel.element;
-			pixel.element = neighbor.element;
-			neighbor.element = tempElem;
-
-			// Cool the neighbor too
-			neighbor.temp = (neighbor.temp || 20) - 80;
-
-			break;
+	tick: function(pixel) {
+		// Slowly cool down
+		pixel.temp -= 1;
+		// Once cool, slowly dissipate
+		if (pixel.temp < 20 && Math.random() < 0.015) {
+			deletePixel(pixel.x, pixel.y);
 		}
 	},
 };
 
-elements.heat_mix = {
-	color: "#ff7b2e",
-	category: "tools",
-	desc: "Heats and mixes pixels, creating a scorching turbulent blend.",
-	tool: function(pixel) {
-		// Heat the target pixel
-		pixel.temp = (pixel.temp || 20) + 80;
+// ── GRASS ─────────────────────────────────────────────────────────────────
+// Stationary solid. Randomized green shading per pixel for a natural look.
+// Burns on contact with fire, spreading fire and emitting smokey above.
 
-		// Pick a random neighboring pixel to swap with
-		var dirs = [
-			[0, -1], [0, 1], [-1, 0], [1, 0],
-			[-1, -1], [1, -1], [-1, 1], [1, 1]
-		];
+elements.grass = {
+	name: "Grass",
+	color: "#4caf50",
+	behavior: behaviors.WALL,
+	category: "land",
+	state: "solid",
+	density: 800,
+	temp: 20,
+	desc: "Lush green grass. Burns easily and produces thick Smokey.",
 
-		// Shuffle directions for randomness
-		for (var i = dirs.length - 1; i > 0; i--) {
-			var j = Math.floor(Math.random() * (i + 1));
-			var tmp = dirs[i]; dirs[i] = dirs[j]; dirs[j] = tmp;
+	reactions: {
+		// When fire touches grass, this grass pixel ignites (becomes fire)
+		"fire": {
+			elem1: "fire",
+			elem2: "fire",
+			chance: 0.07,
+		},
+	},
+
+	tick: function(pixel) {
+		// Give each pixel a randomized natural green shade on first tick
+		if (!pixel.grassColored) {
+			pixel.grassColored = true;
+			var shades = [
+				"#1b5e20", "#2e7d32", "#388e3c",
+				"#43a047", "#4caf50", "#558b2f",
+				"#689f38", "#66bb6a", "#81c784",
+			];
+			pixel.color = shades[Math.floor(Math.random() * shades.length)];
 		}
 
-		for (var i = 0; i < dirs.length; i++) {
-			var nx = pixel.x + dirs[i][0];
-			var ny = pixel.y + dirs[i][1];
+		// If any adjacent neighbor is fire, occasionally puff smokey upward
+		var adj = [
+			[pixel.x,     pixel.y - 1],
+			[pixel.x - 1, pixel.y],
+			[pixel.x + 1, pixel.y],
+			[pixel.x,     pixel.y + 1],
+		];
 
+		for (var i = 0; i < adj.length; i++) {
+			var nx = adj[i][0];
+			var ny = adj[i][1];
 			if (outOfBounds(nx, ny)) continue;
-			if (isEmpty(nx, ny)) continue;
-
-			var neighbor = pixelMap[nx][ny];
-			if (!neighbor) continue;
-
-			// Swap the element types
-			var tempElem = pixel.element;
-			pixel.element = neighbor.element;
-			neighbor.element = tempElem;
-
-			// Heat the neighbor too
-			neighbor.temp = (neighbor.temp || 20) + 80;
-
-			break;
+			var nbr = pixelMap[nx] && pixelMap[nx][ny];
+			if (nbr && nbr.element === "fire") {
+				// Puff smokey above this grass pixel
+				if (Math.random() < 0.05) {
+					var sy = pixel.y - 1;
+					if (!outOfBounds(pixel.x, sy) && isEmpty(pixel.x, sy)) {
+						createPixel("smokey", pixel.x, sy);
+					}
+				}
+				break;
+			}
 		}
 	},
 };
